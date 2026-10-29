@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">SplitSaathi</string>
+    <string name="tagline">Dosto ka hisaab, saaf saaf</string>
+    
+    <!-- Legal Disclaimers -->
+    <string name="money_disclaimer">SplitSaathi is an expense tracking and accountability manager. We NEVER hold, pool, or transfer money, and we have no wallet or payment gateway. Users settle directly via their own UPI apps. All amounts shown are internal accounting records, not verified bank balances.</string>
+    <string name="upi_consent_label">I allow SplitSaathi to use my UPI ID to show payment details to group members who owe me.</string>
+    <string name="upi_format_note">UPI format is validated, not whether the ID actually exists at your bank.</string>
+    <string name="upi_intent_note">SplitSaathi cannot verify bank transfers. Recipient confirms receipt.</string>
+
+    <!-- Navigation -->
+    <string name="nav_groups">Groups</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Add Shared Expenses</string>
+    <string name="onboarding_desc_1">Keep clean records of hostel meals, flat rent, trips, and team events with your friends.</string>
+    <string name="onboarding_title_2">Split Fairly &amp; Accurately</string>
+    <string name="onboarding_desc_2">Divide equally down to the exact paisa, or customize custom shares and commitments.</string>
+    <string name="onboarding_title_3">Pay Directly via UPI</string>
+    <string name="onboarding_desc_3">Open your favorite UPI app with pre-filled details. Track claims and recipient confirmations transparently.</string>
+    <string name="btn_get_started">Get Started</string>
+    <string name="btn_skip">Skip</string>
+    <string name="btn_next">Next</string>
+
+    <!-- Auth -->
+    <string name="auth_sign_in_title">Welcome Back</string>
+    <string name="auth_sign_up_title">Create Account</string>
+    <string name="auth_email_label">Email Address</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_name_label">Full Name</string>
+    <string name="auth_sign_in_btn">Sign In</string>
+    <string name="auth_sign_up_btn">Sign Up</string>
+    <string name="auth_switch_to_sign_up">Don\'t have an account? Sign Up</string>
+    <string name="auth_switch_to_sign_in">Already have an account? Sign In</string>
+
+    <!-- Groups -->
+    <string name="groups_title">Your Groups</string>
+    <string name="groups_create_btn">Create Group</string>
+    <string name="groups_join_btn">Join with Code</string>
+    <string name="groups_create_dialog_title">New Group</string>
+    <string name="groups_name_label">Group Name</string>
+    <string name="groups_desc_label">Description (Optional)</string>
+    <string name="groups_join_dialog_title">Join Group</string>
+    <string name="groups_join_code_label">6-Character Invite Code</string>
+    <string name="groups_empty_title">No Groups Yet</string>
+    <string name="groups_empty_desc">Create a group for your flatmates, trip, or project to start tracking shared expenses.</string>
+    <string name="group_share_invite_text">Join my group \"%1$s\" on SplitSaathi using code: %2$s\nOr tap link: splitsaathi://join/%2$s</string>
+    <string name="group_code_copied">Invite code copied to clipboard</string>
+    <string name="group_leave_btn">Leave Group</string>
+    <string name="group_archive_btn">Archive Group</string>
+
+    <!-- Roles -->
+    <string name="role_owner">Owner</string>
+    <string name="role_admin">Admin</string>
+    <string name="role_member">Member</string>
+
+    <!-- Profile -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_avatar_title">Choose Avatar</string>
+    <string name="profile_upi_title">UPI Payment Details</string>
+    <string name="profile_upi_id_label">UPI ID (e.g. username@okhdfcbank)</string>
+    <string name="profile_save_btn">Save Changes</string>
+    <string name="profile_sign_out_btn">Sign Out</string>
+
+    <!-- Statuses -->
+    <string name="status_will_pay">Will Pay</string>
+    <string name="status_paid_pending">Waiting for Confirmation</string>
+    <string name="status_paid_confirmed">Confirmed Paid</string>
+    <string name="status_disputed">Disputed</string>
+    <string name="status_rejected_resolved">Rejected</string>
+    <string name="status_cancelled">Cancelled</string>
+
+    <!-- Actions -->
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_delete">Delete</string>
+</resources>

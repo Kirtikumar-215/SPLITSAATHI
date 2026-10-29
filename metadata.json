@@ -1,0 +1,6 @@
+{
+  "name": "SplitSaathi",
+  "description": "Dosto ka hisaab, saaf saaf - Shared expense manager with direct UPI settlement tracking",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

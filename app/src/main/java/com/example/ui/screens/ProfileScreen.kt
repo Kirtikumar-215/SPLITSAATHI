@@ -7,8 +7,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.filled.Payment
-import androidx.compose.material.icons.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Policy
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +35,8 @@ import com.example.util.MoneyUtils
 fun ProfileScreen(
     currentProfile: ProfileEntity?,
     onSaveProfile: (displayName: String, phone: String?, upiId: String?, upiConsent: Boolean, avatarKey: String) -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var displayName by remember(currentProfile) { mutableStateOf(currentProfile?.displayName ?: "") }
@@ -38,6 +44,10 @@ fun ProfileScreen(
     var upiId by remember(currentProfile) { mutableStateOf(currentProfile?.upiId ?: "") }
     var upiConsent by remember(currentProfile) { mutableStateOf(currentProfile?.upiConsent ?: false) }
     var selectedAvatar by remember(currentProfile) { mutableStateOf(currentProfile?.avatarKey ?: "avatar_1") }
+
+    var showLegalDialogTitle by remember { mutableStateOf<String?>(null) }
+    var showLegalDialogContent by remember { mutableStateOf<String?>(null) }
+    var showDeleteAccountConfirm by remember { mutableStateOf(false) }
 
     val upiError = remember(upiId) {
         if (upiId.isNotBlank() && !MoneyUtils.isValidUpiId(upiId)) {
@@ -197,11 +207,37 @@ fun ProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Honest Verification Note
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Details are self-declared and not verified by SplitSaathi. Reinstalling the app may require you to set up your profile again.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             DisclaimerBanner()
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = {
@@ -229,20 +265,171 @@ fun ProfileScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // Legal & Compliance Documents Section
+            Text(
+                text = "Privacy, Terms & Compliance",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    TextButton(
+                        onClick = {
+                            showLegalDialogTitle = "Privacy Policy"
+                            showLegalDialogContent = "SplitSaathi values your privacy. We store only your self-declared name, optional phone, and optional UPI ID. Data is retained locally on your device and synchronized to your group ledger solely for mutual expense tracking. We do not sell your personal data or track your behavior across third-party apps."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Outlined.Policy, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Privacy Policy", modifier = Modifier.weight(1f))
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    TextButton(
+                        onClick = {
+                            showLegalDialogTitle = "Terms of Service"
+                            showLegalDialogContent = "SplitSaathi is an informal shared expense calculator and tracker. SplitSaathi is NOT a bank, payment processor, or digital wallet. All money transfers occur peer-to-peer via external UPI apps. SplitSaathi does not hold, transmit, or custody user funds."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Terms of Service", modifier = Modifier.weight(1f))
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    TextButton(
+                        onClick = {
+                            showLegalDialogTitle = "Refund & Dispute Policy"
+                            showLegalDialogContent = "Because SplitSaathi never processes or holds funds, all financial transactions are executed directly between users via external UPI applications. Refunds, reversals, or erroneous payments must be resolved directly between the sender and recipient or through your bank."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Outlined.Security, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Refund & Dispute Policy", modifier = Modifier.weight(1f))
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    TextButton(
+                        onClick = {
+                            showLegalDialogTitle = "Cookie & Storage Policy"
+                            showLegalDialogContent = "SplitSaathi uses device-local storage (Room Database and SharedPreferences) strictly for operational session management and offline calculation. No third-party marketing or tracking cookies are utilized."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Outlined.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Cookie & Local Storage Notice", modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Sign Out Button
             OutlinedButton(
                 onClick = onSignOut,
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("profile_sign_out_btn")
             ) {
-                Icon(Icons.Outlined.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.profile_sign_out_btn))
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Data Deletion / Account Reset Button
+            OutlinedButton(
+                onClick = { showDeleteAccountConfirm = true },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_delete_account_btn")
+            ) {
+                Icon(Icons.Outlined.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Delete Account & Reset Data")
+            }
         }
+    }
+
+    // Legal Policy Viewer Dialog
+    if (showLegalDialogTitle != null && showLegalDialogContent != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showLegalDialogTitle = null
+                showLegalDialogContent = null
+            },
+            title = { Text(showLegalDialogTitle!!) },
+            text = {
+                Text(
+                    text = showLegalDialogContent!!,
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLegalDialogTitle = null
+                    showLegalDialogContent = null
+                }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    // Delete Account Confirmation Dialog
+    if (showDeleteAccountConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAccountConfirm = false },
+            icon = {
+                Icon(
+                    Icons.Outlined.DeleteForever,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = { Text("Delete Account & Personal Data?") },
+            text = {
+                Text(
+                    text = "This will erase your active session and personal details (Name, Phone number, UPI ID). To preserve mutual accounting integrity for your friends and roommates, existing recorded group expenses will be anonymized to 'Deactivated Member' rather than corrupting group balance records.\n\nAre you sure you wish to proceed?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteAccountConfirm = false
+                        onDeleteAccount()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete Account")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAccountConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

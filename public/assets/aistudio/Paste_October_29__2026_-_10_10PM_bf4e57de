@@ -1,0 +1,656 @@
+# SPLITSAATHI — Production Readiness, Privacy, Security, Compliance & Quality Remediation Master Prompt
+
+## 1. Role and Mission
+
+Act as a senior Android security engineer, application security auditor, Kotlin/Room architect, PostgreSQL/Supabase security specialist, privacy engineer, accessibility specialist, QA engineer, and production release reviewer.
+
+Your task is to inspect, remediate, test, and verify the actual source code of:
+
+Repository: `https://github.com/Kirtikumar-215/SPLITSAATHI`
+
+The goal is to make SPLITSAATHI a secure, privacy-conscious, accessible, reliable, maintainable, and production-ready expense-sharing Android application.
+
+Do not merely generate recommendations, documentation, or a checklist. Inspect the current repository, identify which protections already exist, implement appropriate fixes, execute available tests, add missing tests, and provide verifiable evidence.
+
+**A fix is not complete because a file was created, a comment was added, a workflow was written, or a report claims success. A fix is complete only when the implementation is present and the relevant verification succeeds.**
+
+Never claim that the application is completely secure, impossible to reverse engineer, impossible to hack, or guaranteed never to leak data. Minimize attack surfaces, enforce authorization, protect sensitive data, and clearly document residual risks.
+
+## 2. Non-Negotiable Working Rules
+
+1. Inspect the latest repository state and record the exact branch and commit SHA before making changes.
+2. Review the complete project structure, Gradle configuration, Android manifest, Kotlin source, database entities and DAOs, migrations, tests, Supabase migrations, RLS policies, RPCs, scripts, assets, dependencies, and GitHub Actions workflows.
+3. Check previous audit findings against the actual current code. A previous finding may already be fixed, partially fixed, or still present. Determine its current status from evidence.
+4. Preserve existing user work. Do not overwrite unrelated changes, delete useful features, or rewrite the application unnecessarily.
+5. Do not silently remove functionality just to make tests pass.
+6. Never put real credentials, passwords, access tokens, signing keys, service-role keys, private keys, or database connection strings in source code, logs, screenshots, test reports, or committed configuration files.
+7. Never ask the user to paste secrets into chat. Use local environment variables or a secret manager.
+8. Do not execute destructive database migrations, reset a real database, delete real user data, rotate production credentials, change production infrastructure, publish a release, or push commits without the necessary explicit authorization.
+9. Use a disposable, isolated test database for destructive security and migration tests.
+10. Do not fabricate test results, security scan results, legal compliance, dependency audits, successful builds, or deployment status.
+11. If a required tool, credential, environment, device, external service, or test database is unavailable, mark the relevant task BLOCKED and state precisely what is missing.
+12. Make fixes in small, reviewable steps. After each logical change, run the relevant tests before continuing.
+13. Do not add a third-party SDK, analytics provider, advertising network, or tracking service without establishing a real need and reviewing its privacy implications.
+14. Keep the app's existing visual identity and core expense-sharing functionality unless a change is required for safety, security, accessibility, or correctness.
+15. Do not claim production readiness until the release gates in this prompt have passed.
+
+## 3. Establish the Baseline
+
+Before editing, produce a baseline inventory covering:
+
+- Android application ID, package name, supported Android versions, target SDK, and release configuration.
+- Kotlin, Android Gradle Plugin, Gradle wrapper, dependency versions, and build variants.
+- All application screens, navigation flows, forms, permission requests, and user-facing features.
+- All personal data collected, generated, stored, transmitted, exported, or shared.
+- Authentication and identity management.
+- Room database schema, DAOs, transactions, migrations, and local persistence.
+- Supabase tables, functions, grants, RLS policies, database roles, and migrations.
+- Payment claim, payment confirmation, dispute, contribution, expense cancellation, and balance-calculation logic.
+- Third-party SDKs, libraries, network endpoints, external links, analytics, crash reporting, and advertising integrations.
+- All existing legal and privacy documents, consent controls, and account deletion flows.
+- Accessibility, keyboard navigation, screen reader support, color contrast, and text scaling.
+- Existing tests, CI workflows, release artifacts, and historical security incidents visible in repository history.
+
+Create a traceable finding register with:
+
+`Finding ID | Severity | File/Location | Evidence | Risk | Proposed Fix | Test | Status`
+
+Use these statuses consistently:
+
+- PASS — implementation exists and relevant evidence verifies it.
+- FAIL — a defect is present or a required control is missing.
+- PARTIAL — some protection exists, but requirements are not fully met.
+- BLOCKED — verification or remediation requires unavailable access, infrastructure, or approval.
+- NOT APPLICABLE — the feature or legal obligation does not apply, with a documented rationale.
+- NOT VERIFIED — there is insufficient evidence to make a determination.
+
+Distinguish confirmed defects from potential risks, inferred behavior, and unverified assumptions.
+
+## 4. Privacy Policy and Data Protection
+
+Create a clear, accurate Privacy Policy based on actual application behavior.
+
+Suggested location: `docs/legal/privacy-policy.md`, plus an appropriate user-accessible in-app screen and public policy URL if the app requires one.
+
+The policy must explain, where applicable:
+
+- What personal data is collected.
+- Why each category is needed.
+- Whether data is optional or required.
+- How data is stored locally and remotely.
+- Who can access the data and under what conditions.
+- Whether data is shared with service providers or third parties.
+- Retention periods and deletion procedures.
+- Security measures and their limitations.
+- User rights, privacy contact details, and complaint or grievance procedures where applicable.
+- How users can request access, correction, deletion, or withdrawal of consent.
+- What happens when users delete an account or leave a group.
+- Whether financial records may need to be retained for a legitimate legal or operational reason.
+- Policy version, effective date, and material-change notification process.
+
+Do not invent company names, addresses, contact emails, retention periods, data-sharing practices, or certifications. Use clearly marked placeholders where verified business details are missing.
+
+Implement privacy by design:
+
+1. Map each data field to a specific purpose.
+2. Collect only what is necessary for that purpose.
+3. Make optional fields genuinely optional.
+4. Do not collect contacts, precise location, advertising identifiers, age, device identifiers, or other sensitive information unless a documented feature genuinely requires it.
+5. Do not request Android permissions without a demonstrated need.
+6. Avoid logging personal information, payment references, UPI identifiers, phone numbers, authentication tokens, or financial records.
+7. Do not expose sensitive information in notifications, analytics events, crash reports, or exported files unnecessarily.
+8. Restrict personal data to authorized users and appropriate retention periods.
+9. Provide an understandable explanation before collecting optional sensitive data.
+10. Never represent local data storage as cloud synchronization, or claim data is encrypted when that has not been verified.
+
+Review Android backup behavior and backup rules. Exclude authentication secrets and sensitive financial data from backups when appropriate. Make the backup and recovery design explicit rather than relying on default behavior.
+
+## 5. Terms of Service
+
+Create Terms of Service based on the application's actual capabilities.
+
+Cover, where relevant:
+
+- Account responsibilities and acceptable use.
+- Group membership, expenses, contributions, and disputes.
+- The distinction between recording a payment claim and independently verifying that money was received.
+- UPI intent or external payment-app handoff behavior.
+- The application's actual role in facilitating expense tracking.
+- Limitations of automated balances and user-entered data.
+- Prohibited abuse, fraudulent entries, unauthorized access, and impersonation.
+- Account suspension, termination, and deletion.
+- Service availability, support, updates, and material changes.
+- Intellectual property and permitted use.
+- Appropriate liability limitations, dispute procedures, and governing law, subject to applicable law.
+
+Do not claim that SPLITSAATHI processes, holds, settles, or guarantees payments unless the implemented architecture and actual business operations support that claim.
+
+Do not add unlawful liability waivers or misleading clauses. Flag clauses requiring review by qualified Indian legal counsel.
+
+## 6. Refund and Cancellation Policy
+
+First inspect the actual monetization model.
+
+- If the app is free and does not sell subscriptions, digital goods, or other paid services, state that no in-app purchase or subscription refund flow currently applies.
+- Do not invent a paid plan, fee, purchase, refund deadline, or cancellation charge.
+- If paid functionality exists, document actual prices, taxes where applicable, renewal terms, cancellation steps, refund eligibility, and support procedures.
+- Verify any Google Play billing or external payment integration before documenting it.
+- Distinguish a refund for an app purchase from repayment of an expense between group members.
+- Do not label an expense-sharing payment as an app purchase.
+- Ensure all fees and paid features are disclosed before a user commits to a purchase.
+
+Provide a visible refund and support route wherever required by the actual business model and applicable rules.
+
+## 7. Cookie Policy and Cookie Consent
+
+Determine whether cookies are actually used.
+
+For the native Android application, do not add a fake web-style cookie banner merely to satisfy a checklist. Native app preferences are not automatically browser cookies.
+
+Inspect:
+
+- Embedded WebViews.
+- Authentication providers.
+- Website pages opened inside the app.
+- Analytics and advertising SDKs.
+- Any associated website or landing page.
+- Tracking technologies and third-party storage.
+
+If a website or WebView uses cookies or similar technologies, document their purposes, providers, lifetimes, and controls as applicable.
+
+Implement consent controls only where needed. Non-essential tracking must not begin before the required consent is obtained. Respect withdrawal of consent and persist the resulting choice appropriately.
+
+If no relevant cookie or tracking technology is used, document the finding and mark the cookie-consent banner NOT APPLICABLE, with evidence.
+
+Do not use a consent banner to disguise unnecessary data collection.
+
+## 8. Consent and Form Review
+
+Audit every onboarding screen, form, settings screen, permission prompt, and data submission flow.
+
+Verify that:
+
+- Required fields are genuinely necessary.
+- Optional fields are not falsely marked mandatory.
+- Consent for optional purposes is separate from accepting necessary terms.
+- Consent is informed, specific, understandable, and freely given where required.
+- Privacy Policy and Terms of Service links work.
+- The user can distinguish accepting terms from granting optional permissions.
+- Consent is not preselected where affirmative consent is required.
+- Consent can be withdrawn where applicable.
+- The application records consent version and timestamp only when necessary and lawful.
+- A consent record cannot be forged or altered by an unauthorized client to bypass server-side requirements.
+- Users can review relevant privacy settings later.
+
+Do not use prechecked boxes, forced marketing opt-ins, deceptive wording, confusing button labels, or unnecessary repeated consent requests.
+
+Age consent:
+
+- Determine whether the app actually collects date of birth or other age information.
+- Do not add age collection without a clear purpose.
+- If age information or child access is relevant, implement an appropriate age-assurance and parental-consent design based on applicable law and the app's distribution requirements.
+- Do not invent a minimum age or claim parental consent is implemented without evidence.
+- If no age data is collected, document that fact and evaluate whether any age-related obligations still apply.
+
+## 9. Account and Data Deletion
+
+Implement a discoverable data deletion request option within the application, such as:
+
+`Settings → Privacy → Delete Account / Request Data Deletion`
+
+The workflow must:
+
+1. Explain what will be deleted and what may need to be retained.
+2. Explain the effect on groups, expenses, payment history, and other members' records.
+3. Request appropriate confirmation and reauthentication for sensitive actions.
+4. Authenticate the request and enforce authorization on the server.
+5. Delete or anonymize eligible records according to a documented retention policy.
+6. Preserve only records that must legitimately remain, and explain why.
+7. Handle related records, foreign keys, attachments, notifications, logs, and cached copies.
+8. Prevent a user from deleting or modifying another user's records.
+9. Record completion status without unnecessarily retaining the deleted personal information.
+10. Provide a clear outcome and a support path if the request cannot be completed automatically.
+
+Do not implement a client-only deletion button that merely clears local SharedPreferences or hides the account.
+
+Test successful deletion, unauthorized deletion, repeated requests, partial failures, retention exceptions, and behavior when the device is offline.
+
+If the app currently has no real cloud account, do not fabricate a server-side account-deletion feature. Implement what is actually supported and mark missing backend functionality BLOCKED until the necessary architecture exists.
+
+## 10. Third-Party SDK and Dependency Audit
+
+Inventory every direct and transitive dependency.
+
+For each SDK or library, record:
+
+- Name and version.
+- Purpose and affected features.
+- Data accessed or transmitted.
+- Permissions and network access.
+- Privacy Policy and provider documentation.
+- License and commercial-use constraints.
+- Known vulnerabilities and maintenance status.
+- Whether it is required.
+- Whether a safer alternative exists.
+
+Inspect Gradle dependency declarations, the resolved dependency tree, manifests contributed by libraries, permissions, network endpoints, and any embedded SDK configuration.
+
+Remove unnecessary SDKs and unused dependencies when safe. Do not remove a dependency blindly if doing so breaks required functionality.
+
+Review dependency vulnerabilities using suitable tools such as dependency-checking services, OSV-compatible scanners, or repository-supported security tooling. Record tool versions and results.
+
+Do not claim an SDK is safe simply because no vulnerability was found. Document limitations and unresolved findings.
+
+## 11. Android App Security and Reverse-Engineering Resistance
+
+Harden the application against realistic attacks.
+
+### Build and package security
+
+- Enable release code shrinking and obfuscation where compatible, using R8 or the appropriate supported configuration.
+- Review release minification, resource shrinking, and ProGuard/R8 rules.
+- Inspect the release APK or AAB to verify the expected hardening is actually present.
+- Keep signing credentials outside source control.
+- Never commit keystores, private signing keys, passwords, service-role keys, or production secrets.
+- Verify release signing configuration and document secure key storage and recovery.
+- Separate debug and release configuration.
+- Disable debugging in release builds.
+- Review exported activities, services, receivers, and content providers.
+- Explicitly configure component export and intent permissions.
+- Use Android Network Security Configuration appropriately.
+- Do not trust all certificates or disable TLS verification.
+- Prevent sensitive information from appearing in logs or crash traces.
+- Review screenshots, clipboard behavior, and task previews for sensitive screens where relevant.
+- Use secure local storage for authentication secrets. Do not assume ordinary SharedPreferences is encrypted.
+- Apply Android backup exclusions where appropriate.
+- Use Play Integrity or equivalent risk signals only if justified, and never treat device integrity signals as a substitute for backend authorization.
+
+### Important limitation
+
+Do not promise that an APK cannot be decompiled, copied, patched, or reverse engineered. Assume attackers can inspect the client and manipulate local state.
+
+Keep security-sensitive decisions on a trusted server. Obfuscation is a defense-in-depth measure, not a security boundary.
+
+Do not embed Supabase service-role credentials or database passwords in the Android app. A public client key, if required by the platform, is not a substitute for row-level security and correct authorization.
+
+## 12. Supabase and PostgreSQL Security
+
+Treat this workstream as a critical release gate.
+
+Inspect every table, view, function, trigger, role, grant, RLS policy, and migration.
+
+### RLS and database permissions
+
+- Enable RLS on every table exposed through client-accessible APIs.
+- Audit all existing policies, including permissive policy combinations.
+- Review anonymous and authenticated role access.
+- Restrict profile visibility and protect phone numbers, UPI identifiers, and other personal data.
+- Prevent users from joining groups through direct table inserts that bypass invite validation.
+- Prevent unauthorized expense, participant, contribution, payment, notification, and activity-log changes.
+- Enforce membership, role, ownership, and status requirements at the database boundary.
+- Restrict sensitive table writes to validated RPCs when appropriate.
+- Ensure unauthorized users cannot read, modify, delete, or enumerate another user's records.
+- Review all `SECURITY DEFINER` functions for ownership, execution grants, safe `search_path`, authorization, and privilege escalation.
+- Revoke unnecessary public execution and table permissions.
+- Never rely exclusively on client-side role checks or hidden UI controls.
+
+### Financial integrity
+
+- Validate positive amounts, non-negative shares, participant uniqueness, active group membership, payer eligibility, and exact share totals.
+- Enforce allowed payment status transitions in the database.
+- Prevent unauthorized confirmation, disputes, cancellation, replay, and duplicate financial operations.
+- Ensure partial payments cannot accidentally overpay an obligation.
+- Validate idempotency keys and enforce uniqueness at the database boundary.
+- Make multi-step financial operations atomic using database transactions or transactional RPCs.
+- Apply appropriate row locking and concurrency protection.
+- Prevent clients from arbitrarily changing confirmed amounts, payer identities, recipient identities, or audit records.
+- Check that computed balances correctly handle confirmed payments, partial settlements, cancelled expenses, and disputed records.
+- Prevent unauthorized access to UPI information and verify consent and legitimate access requirements.
+- Avoid claiming that a payment has been received merely because a user initiated an external UPI payment or submitted a claim.
+
+### Migration and database safety
+
+- Make migrations reproducible, versioned, and safe to rerun where appropriate.
+- Verify the actual schema after migrations.
+- Ensure upgrades do not silently discard user data.
+- Test rollback or recovery procedures where supported.
+- Use a disposable database to test negative authorization cases.
+- Never use production user data as an uncontrolled security test fixture.
+
+Add tests for:
+
+1. Unauthenticated database access.
+2. Cross-user profile access.
+3. Unauthorized group membership insertion.
+4. Non-member expense access.
+5. Unauthorized expense and contribution modification.
+6. Unauthorized payment confirmation and dispute.
+7. Invalid status transitions.
+8. Invalid share totals and duplicate participants.
+9. Duplicate/replayed payment requests.
+10. Race conditions involving concurrent claims and confirmations.
+11. Unauthorized deletion and modification of audit records.
+12. Unauthorized access to UPI information.
+13. Excessive function execution privileges.
+14. Expired and exhausted group invites.
+
+A test must fail if an unauthorized operation succeeds. Do not merely check that a SQL file exists.
+
+## 13. Authentication, Identity, and Cloud Synchronization
+
+Determine the actual authentication and synchronization architecture before implementing changes.
+
+- Distinguish a locally generated user ID from a verified server-side identity.
+- Do not treat a display name, phone number, or locally stored UUID as proof of identity.
+- Use a suitable supported authentication system with secure session handling.
+- Do not introduce passwords or collect identity information unnecessarily.
+- If phone or email verification is implemented, verify that the provider actually confirms ownership.
+- Enforce access control on every remote operation.
+- Design safe token refresh, logout, session expiration, and account recovery.
+- Prevent one account from impersonating another through modified local state.
+- Define offline behavior and conflict resolution explicitly.
+- Synchronize local and remote data without silently overwriting newer server data.
+- Ensure retries are idempotent.
+- Provide clear handling for failed synchronization, duplicate operations, and stale data.
+
+If cloud authentication or synchronization is missing, do not claim it exists. Implement it only with the required architecture, configuration, and testing environment. Otherwise mark it BLOCKED and provide a precise implementation plan.
+
+## 14. Payment and Financial Data Protection
+
+SPLITSAATHI must preserve the distinction between expense bookkeeping and actual payment processing.
+
+- Do not store UPI PINs, bank passwords, card security codes, or unnecessary financial credentials.
+- Never ask users to share UPI PINs.
+- Avoid storing sensitive payment details unless required for a verified purpose.
+- Protect UPI identifiers and payment references.
+- Use integer paise for money calculations.
+- Validate input bounds and detect arithmetic overflow.
+- Reject duplicate participant IDs.
+- Validate percentages and ratio weights.
+- Ensure every split algorithm produces non-negative shares and an exact total equal to the expense amount.
+- Test zero values, negative values, huge values, malformed inputs, decimal rounding, empty participants, and duplicate participants.
+- Make payment claims and confirmations transactional and idempotent.
+- Do not trust a client-provided payment status.
+- Maintain an appropriately protected audit trail.
+- Avoid revealing another user's payment or contribution details to unauthorized members.
+- Do not add processing fees, subscriptions, or paid features without explicit business requirements and transparent disclosure.
+
+## 15. Accessibility and Inclusive Design
+
+Audit every screen and interactive element.
+
+Implement:
+
+- Meaningful accessibility labels and content descriptions for buttons, icons, images, and controls.
+- Appropriate decorative-image handling so screen readers do not announce meaningless content.
+- Correct accessibility roles, states, and focus behavior.
+- Sufficient text and control contrast, targeting WCAG 2.2 AA contrast requirements where applicable.
+- Text scaling and dynamic font-size support.
+- Screen-reader-friendly forms and validation messages.
+- Keyboard and switch navigation wherever supported.
+- Visible keyboard focus and logical focus order.
+- Minimum practical touch-target sizes.
+- Clear errors that identify the affected field and explain how to correct it.
+- Non-color-only indicators for success, failure, warnings, and payment states.
+- Accessible dialogs, bottom sheets, charts, tables, and navigation.
+- Reduced motion or motion alternatives where relevant.
+
+Measure contrast using a suitable tool instead of guessing. Test with TalkBack and keyboard navigation on representative screens when the environment permits.
+
+Do not claim accessibility compliance solely because content descriptions were added.
+
+## 16. Dark Patterns, Fees, Reviews, and Unsupported Features
+
+Inspect onboarding, consent, purchases, notifications, dialogs, and settings for deceptive patterns.
+
+Remove or correct:
+
+- Hidden fees and undisclosed charges.
+- Preselected optional marketing consent.
+- Forced unnecessary permissions.
+- Misleading button labels.
+- False urgency or fabricated scarcity.
+- Difficult cancellation or account deletion.
+- Fake reviews, fabricated testimonials, and misleading ratings.
+- Fake security badges or unsupported certifications.
+- Claims about features that are not implemented.
+- Hidden or misleading monetization.
+- Unnecessary notifications designed to pressure users.
+- Unsupported games or unrelated functionality if present.
+
+Never generate fake user reviews or ratings. Do not invent game features or add unrelated games to an expense-sharing application.
+
+Do not add a fee or purchase flow unless it is explicitly required, transparently disclosed, legally reviewed where needed, and correctly implemented.
+
+## 17. Business Identity, Contact Details, and Legal Applicability
+
+Audit whether the app requires publisher identity, business contact information, grievance contacts, support details, or other disclosures.
+
+Use verified business information only.
+
+Do not invent:
+
+- A registered company.
+- A business address.
+- A legal representative.
+- A support email.
+- A grievance officer.
+- A registration number.
+- A certification.
+- A legal approval.
+
+If information is missing, create a clearly marked release blocker or ask the owner to supply verified details.
+
+Assess applicable requirements in India, including relevant data protection, information technology, consumer protection, e-commerce where applicable, and Google Play policies. Do not assume every law applies to every feature.
+
+Consider the Digital Personal Data Protection Act, 2023, applicable rules and commencement notifications, and other current requirements in force at release time. Verify current legal applicability rather than assuming every provision is already in force.
+
+Distinguish mandatory legal requirements, platform policies, recommended practices, and optional product features.
+
+Flag legal language requiring qualified Indian legal review. Do not claim legal certification.
+
+## 18. Email, Notifications, and Unsubscribe
+
+First determine whether the application sends email or marketing communications.
+
+- If marketing emails exist, provide a functional unsubscribe mechanism where required.
+- Honor opt-outs promptly.
+- Separate necessary service communications from optional marketing communications.
+- Do not send promotional emails without an appropriate legal basis and consent where required.
+- Keep notification preferences understandable.
+- Do not expose sensitive financial information in lock-screen notifications by default.
+- Do not claim an unsubscribe feature exists until it has been implemented and tested.
+
+If the app sends no emails, mark the unsubscribe feature NOT APPLICABLE and document the evidence.
+
+## 19. Fonts, Images, and Intellectual Property
+
+Inventory fonts, illustrations, icons, photographs, logos, and other bundled assets.
+
+For each asset, record its source, license, permitted usage, attribution requirements, and any restrictions.
+
+- Use assets that are original, properly licensed, or otherwise legally permitted.
+- Include required license and attribution notices.
+- Do not assume that a publicly accessible image is free for commercial use.
+- Verify font licenses, including redistribution and app-bundling permissions.
+- Remove assets with unclear or incompatible licensing.
+- Avoid copying proprietary brand assets without permission.
+- Ensure app screenshots and marketing materials do not contain misleading claims.
+
+Do not claim all assets are licensed until each relevant asset has been checked.
+
+## 20. Data Exports and Local File Handling
+
+Audit CSV exports, reports, attachments, and any generated documents.
+
+- Prevent CSV formula injection by safely handling values beginning with spreadsheet formula characters.
+- Do not include unnecessary personal information in exports.
+- Verify export authorization and group membership.
+- Protect temporary files and cached attachments.
+- Avoid exposing private data through publicly accessible file URLs.
+- Use appropriate file-provider permissions and content URIs.
+- Validate file types, sizes, and content when accepting attachments.
+- Ensure deletion and retention behavior is documented.
+- Test export, import, sharing, and cancellation paths.
+
+## 21. Testing, CI, and Release Engineering
+
+Fix the repository's real build and test setup before declaring success.
+
+Inspect whether the Gradle wrapper scripts and wrapper JAR are present and consistent with the configured Gradle distribution. If they are missing, restore a legitimate compatible wrapper instead of hiding the failure with `|| true`.
+
+Set up CI to run, as appropriate:
+
+- Gradle wrapper validation.
+- Clean build.
+- Debug APK build.
+- Unit tests.
+- Robolectric or instrumentation tests.
+- Kotlin lint/static analysis.
+- Android lint.
+- Dependency and secret scanning.
+- Database migration verification.
+- Actual PostgreSQL/Supabase integration tests in an isolated environment.
+- RLS authorization tests.
+- Release build and signing validation where signing credentials are available.
+
+The workflow must return a non-zero exit code when a required step fails. Never allow a missing wrapper, absent test database, or skipped test suite to produce a misleading green result.
+
+Use test reports, logs, and artifacts to demonstrate results. Redact credentials and personal data from logs.
+
+Add tests for:
+
+- Authentication and authorization.
+- Session expiry and logout.
+- Privacy consent and withdrawal.
+- Data deletion and retention.
+- Financial arithmetic and edge cases.
+- Payment status transitions and idempotency.
+- Room migration and data preservation.
+- Network failures, retries, and duplicate requests.
+- Accessibility-critical flows.
+- Export security and CSV injection.
+- Dependency and secret regressions.
+
+Do not state that a test passed if it was skipped, blocked, never executed, or only statically inspected.
+
+## 22. Release Documentation
+
+Create or update:
+
+- `docs/legal/privacy-policy.md`
+- `docs/legal/terms-of-service.md`
+- `docs/legal/refund-policy.md`
+- `docs/legal/cookie-policy.md`
+- `docs/security/threat-model.md`
+- `docs/security/security-controls.md`
+- `docs/security/incident-response.md`
+- `docs/privacy/data-inventory.md`
+- `docs/privacy/retention-and-deletion.md`
+- `docs/accessibility/accessibility-audit.md`
+- `docs/release/release-readiness.md`
+
+Adapt filenames if the repository already has an established structure. Avoid duplicate or contradictory documents.
+
+All policies must match the real implementation. If a feature is absent, do not describe it as available. Clearly distinguish a planned feature from an implemented and verified feature.
+
+## 23. Required Remediation Workflow
+
+Work in the following order:
+
+### Phase A — Baseline and threat model
+Inspect the repository, identify assets and trust boundaries, establish the build baseline, and produce the prioritized findings register.
+
+### Phase B — Critical security fixes
+Address exposed credentials, unsafe database permissions, authentication gaps, authorization bypasses, financial integrity defects, and destructive migration risks.
+
+### Phase C — Privacy and legal controls
+Implement accurate policies, data minimization, form consent, appropriate privacy settings, and supported data deletion workflows.
+
+### Phase D — Android security and accessibility
+Harden release configuration, review SDKs, fix accessibility defects, and remove misleading UI or unsupported claims.
+
+### Phase E — Automated verification
+Add or repair tests, execute them, inspect actual outputs, and address failures.
+
+### Phase F — Release gate
+Run the final build, tests, security checks, database checks, accessibility checks, and policy consistency review.
+
+Do not skip phases because a deadline is short. If a phase is blocked, report the blocker explicitly.
+
+## 24. Failure and Retry Protocol
+
+When a test or command fails:
+
+1. Capture the exact failing command and relevant output.
+2. Identify the actual root cause rather than guessing.
+3. Inspect the related source, configuration, and dependencies.
+4. Form a specific fix hypothesis.
+5. Implement the smallest safe correction.
+6. Rerun the failed test.
+7. Run relevant regression tests.
+8. Record the result and any remaining uncertainty.
+
+Allow up to four distinct diagnostic/fix attempts for a failure when meaningful alternatives exist. Each attempt must use a different evidence-based approach. Do not repeat an unchanged failing command indefinitely.
+
+If four meaningful attempts fail, stop and report the root cause, attempts, evidence, and minimum required next action. Never fabricate a passing result.
+
+## 25. Definition of Done
+
+The application must not be declared production-ready until:
+
+- Critical and high-severity findings are fixed or explicitly accepted by the authorized owner with documented rationale.
+- Secrets are removed from current source and historical exposure is addressed.
+- Database authorization is enforced server-side.
+- Financial operations are atomic, validated, and tested.
+- Authentication and synchronization claims match the actual implementation.
+- Data collection is minimized and accurately disclosed.
+- Privacy and legal screens reflect the real product.
+- Deletion and consent behavior is implemented where applicable.
+- Third-party SDKs and asset licenses have been reviewed.
+- Accessibility issues have been tested and documented.
+- CI builds the application successfully.
+- Required automated tests execute and pass.
+- Database security tests run against an isolated test environment.
+- A release artifact is produced and verified when the required signing setup is available.
+- No unresolved release blocker is disguised as a completed task.
+- Remaining risks and unavailable verification steps are clearly disclosed.
+
+## 26. Final Evidence-Based Report
+
+Provide the following final deliverables:
+
+1. Executive summary with a clear release recommendation.
+2. Exact branch and commit SHA inspected.
+3. Findings register with severity and evidence.
+4. Every file changed and why.
+5. Security and privacy changes actually implemented.
+6. Policy documents created or updated.
+7. Third-party SDK and asset-license audit results.
+8. Test commands executed and exact results.
+9. GitHub Actions run link and job results, if available.
+10. Database and RLS test evidence.
+11. Accessibility findings and verification results.
+12. Remaining blockers, accepted risks, and unverified claims.
+13. Required owner decisions or missing configuration.
+14. A separate list of claims that cannot currently be substantiated.
+15. A final status of PASS, PARTIAL, FAIL, or BLOCKED for every workstream.
+
+Separate all statements into:
+
+- VERIFIED — supported by code and successful test evidence.
+- IMPLEMENTED, NOT YET VERIFIED — code changed, but required validation is incomplete.
+- PARTIAL — some requirements are met.
+- BLOCKED — required access or infrastructure is missing.
+- NOT APPLICABLE — justified by the actual product.
+- UNSUPPORTED CLAIM — no sufficient evidence exists.
+
+Do not mark the application fully production-ready if any critical security issue remains, if the build fails, if required tests have not executed, or if major data-protection claims cannot be substantiated.
+
+## Final Instruction
+
+Begin with the current repository. Inspect first, then remediate the highest-risk issues, add real tests, and verify the actual result.
+
+Do not stop after generating this plan. Perform the work within the permissions and tools available. Do not push, publish, deploy, rotate production credentials, or destroy production data without explicit authorization.
+
+The final objective is not a perfect-sounding audit report. It is a demonstrably safer application, with accurate policies, enforceable security controls, successful tests, transparent limitations, and no unsupported production-readiness claims.

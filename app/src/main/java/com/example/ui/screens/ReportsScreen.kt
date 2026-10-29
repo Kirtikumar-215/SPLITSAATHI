@@ -208,15 +208,27 @@ fun ReportsScreen(
     }
 }
 
+private fun sanitizeCsvField(value: String): String {
+    var clean = value.replace("\"", "\"\"").replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    // Prevent CSV formula injection by prepending single quote if starting with formula triggers
+    if (clean.isNotEmpty() && (clean.startsWith("=") || clean.startsWith("+") || clean.startsWith("-") || clean.startsWith("@") || clean.startsWith("\t"))) {
+        clean = "'$clean"
+    }
+    return "\"$clean\""
+}
+
 private fun buildCsv(expenses: List<ExpenseEntity>): String {
     val sb = StringBuilder()
     sb.append("Date,Title,Category,Amount (INR),Split Type,Status\n")
     val df = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     for (e in expenses) {
-        val dateStr = df.format(Date(e.expenseDate))
-        val amountStr = MoneyUtils.formatPaiseForUpi(e.amountPaise)
-        val cleanTitle = e.title.replace("\"", "\"\"").replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
-        sb.append("\"$dateStr\",\"$cleanTitle\",\"${e.category.label}\",\"$amountStr\",\"${e.splitType.name}\",\"${e.status.name}\"\n")
+        val dateStr = sanitizeCsvField(df.format(Date(e.expenseDate)))
+        val cleanTitle = sanitizeCsvField(e.title)
+        val catStr = sanitizeCsvField(e.category.label)
+        val amountStr = sanitizeCsvField(MoneyUtils.formatPaiseForUpi(e.amountPaise))
+        val splitStr = sanitizeCsvField(e.splitType.name)
+        val statusStr = sanitizeCsvField(e.status.name)
+        sb.append("$dateStr,$cleanTitle,$catStr,$amountStr,$splitStr,$statusStr\n")
     }
     return sb.toString()
 }

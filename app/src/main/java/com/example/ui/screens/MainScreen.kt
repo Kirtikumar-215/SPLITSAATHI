@@ -345,6 +345,17 @@ fun MainScreen(
                                     repository.signOut()
                                     currentScreen = Screen.Onboarding
                                 }
+                            },
+                            onDeleteAccount = {
+                                coroutineScope.launch {
+                                    val res = repository.deleteAccountAndClearData()
+                                    if (res.isSuccess) {
+                                        Toast.makeText(context, "Account reset and personal data cleared", Toast.LENGTH_SHORT).show()
+                                        currentScreen = Screen.Onboarding
+                                    } else {
+                                        Toast.makeText(context, res.exceptionOrNull()?.message ?: "Failed to reset account", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             }
                         )
                     }

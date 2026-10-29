@@ -99,6 +99,32 @@ class SplitSaathiRepository(
         }
     }
 
+    /**
+     * Anonymizes user profile details (Name, Phone, UPI ID) in compliance with data protection standards,
+     * while retaining accounting transaction history to protect mutual financial integrity of groups.
+     */
+    suspend fun deleteAccountAndClearData(): Result<Unit> = runCatching {
+        withContext(Dispatchers.IO) {
+            val uid = _currentUserId.value
+            if (uid.isNotEmpty()) {
+                val existing = db.profileDao().getProfileById(uid)
+                if (existing != null) {
+                    db.profileDao().upsertProfile(
+                        existing.copy(
+                            displayName = "Deactivated Member",
+                            phone = null,
+                            upiId = null,
+                            upiConsent = false,
+                            upiConsentAt = null
+                        )
+                    )
+                }
+            }
+            sessionManager?.clearSession()
+            _currentUserId.value = ""
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // GROUPS & MEMBERSHIP
     // ---------------------------------------------------------------------------------------------

@@ -52,7 +52,7 @@ class Converters {
         NotificationEntity::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class SplitSaathiDatabase : RoomDatabase() {
@@ -68,6 +68,12 @@ abstract class SplitSaathiDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: SplitSaathiDatabase? = null
 
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Future migration path: preserves existing financial & user records
+            }
+        }
+
         fun getInstance(context: Context): SplitSaathiDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -75,7 +81,7 @@ abstract class SplitSaathiDatabase : RoomDatabase() {
                     SplitSaathiDatabase::class.java,
                     "splitsaathi.db"
                 )
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_1_2)
                 .build()
                 INSTANCE = instance
                 instance

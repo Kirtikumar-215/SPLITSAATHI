@@ -1,0 +1,438 @@
+# MASTER PROMPT: SPLITSAATHI — COMPLETE REPOSITORY AUDIT, FIX, TEST, AND PRODUCTION READINESS
+
+## 1. Your Role
+
+Act as a Senior Android Engineer, Kotlin Developer, Supabase/PostgreSQL Security Engineer, QA Automation Engineer, DevOps Engineer, and Production Release Engineer.
+
+You are working on my existing GitHub repository:
+
+https://github.com/Kirtikumar-215/SPLITSAATHI.git
+
+Your task is to audit, repair, validate, and test the existing application until all seven workstreams described below have been addressed as thoroughly as the available environment permits.
+
+This is not a request for recommendations alone. You must inspect the actual repository, edit the necessary files, run the appropriate commands, inspect the results, fix failures, and retest.
+
+Do not simply produce a report while leaving fixable problems in the code.
+
+## 2. Absolute Working Rules
+
+Follow these rules throughout the entire task.
+
+1. Work on the existing repository and preserve its current architecture, UI, features, and design unless a change is necessary to fix a defect or is explicitly approved.
+2. Never assume a feature works just because a corresponding screen, function, database table, or test file exists.
+3. Never report a build, test, security check, migration, or deployment as successful unless the relevant command or verification actually succeeded.
+4. Never silently skip a failing test or remove an assertion merely to obtain a passing result.
+5. Never weaken authentication, authorization, RLS policies, input validation, or financial correctness to make a test pass.
+6. Never replace real business logic with hard-coded data, mock success responses, placeholder implementations, or fake integrations to hide failures.
+7. Do not introduce unnecessary frameworks, dependencies, architecture rewrites, or unrelated features.
+8. Before changing a file, inspect its current implementation and all relevant callers, dependencies, tests, and database constraints.
+9. After each meaningful fix, rerun the relevant tests. After each workstream, run its complete applicable regression suite.
+10. Do not stop at the first failure. Diagnose the cause, implement a justified fix, and retry.
+11. For an unresolved failure, perform up to four distinct diagnostic/fix attempts when safe and technically meaningful. Do not blindly repeat the same command four times without changing the diagnosis or addressing the underlying cause.
+12. Never claim the application is 100% production-ready if any critical defect, unverified integration, or release blocker remains.
+13. Keep a record of commands, exit codes, test counts, failures, fixes, retries, and remaining limitations.
+14. Do not make destructive changes to the user's production data, cloud resources, Git history, or existing releases without explicit authorization.
+15. Keep the existing repository changes made by the user. Inspect `git status` before editing and never overwrite unrelated uncommitted work.
+16. Do not commit, push, publish a release, deploy to production, or change production infrastructure unless I explicitly authorize that action.
+
+## 3. Mandatory Initial Inspection
+
+Before editing anything:
+
+- Inspect the repository tree, current branch, recent commits, Git status, Gradle wrapper, version catalog, application configuration, Android manifest, Kotlin source, Room entities/DAOs/database, repository classes, UI screens, unit tests, instrumentation tests, Supabase migrations, RLS policies, RPC functions, SQL test scripts, documentation, and environment configuration.
+- Identify the existing architecture and the actual execution path for every important feature.
+- Identify whether the current app uses local Room storage, Supabase, or both, and determine which integrations are genuinely connected.
+- Inspect the full Git history for accidentally committed credentials or sensitive configuration, using safe secret-scanning tools when available. Never print actual secrets into logs or reports.
+- Establish a baseline by running the available build, unit tests, lint, static analysis, and database tests before changing code.
+- Save baseline results so they can be compared with the final results.
+- Identify missing tools, unavailable credentials, unsupported environments, and tests that cannot run in the current environment.
+
+Do not confuse a baseline failure with a failure introduced by your own changes.
+
+## 4. Workstream 1 — Credentials, Secrets, and Repository Security
+
+### Objectives
+
+Eliminate hard-coded credentials and prevent accidental exposure of database passwords, service-role keys, signing credentials, tokens, and other sensitive values.
+
+### Required actions
+
+1. Inspect `supabase/apply_migrations.js`, `supabase/tests/run_rls_test.js`, `.env.example`, `.gitignore`, Gradle configuration, CI configuration, and the complete repository history.
+2. Replace hard-coded database connection strings with environment variables or an appropriate secret-management mechanism.
+3. Validate required environment variables at startup and provide safe, actionable error messages when they are missing.
+4. Ensure `.env`, local properties, signing keys, private keys, and other sensitive files are excluded from Git where appropriate.
+5. Keep `.env.example` limited to placeholder values and variable names. Never include actual credentials.
+6. Ensure database credentials are not embedded in the Android application, client-side code, logs, generated reports, or test artifacts.
+7. Confirm that the Android app uses only the appropriate public client configuration and that privileged server credentials remain server-side.
+8. Scan current tracked files and Git history for exposed secrets.
+9. If a credential has been exposed, document its type and location without reproducing its value. Ask me to rotate it if you do not have authorized access to do so.
+10. Never attempt to rotate credentials, change cloud settings, or rewrite shared Git history without authorization.
+11. Add safe secret scanning to CI if supported by the current tooling.
+
+### Verification
+
+- Run secret scanning on tracked files.
+- Run history scanning if the required tool is available.
+- Run the migration helper's configuration-validation path using dummy values or a disposable test environment.
+- Verify missing configuration fails safely rather than connecting to an unintended database.
+- Verify no privileged secret is shipped in the Android artifact.
+
+**Pass condition:** No known live credentials remain hard-coded in current source, and exposed credentials have an explicit rotation status.
+
+## 5. Workstream 2 — Authentication, Identity, and Cloud Synchronization
+
+### Objectives
+
+Establish a reliable identity model and determine whether the application can safely maintain consistent data across devices.
+
+### Required actions
+
+1. Trace onboarding, profile creation, session persistence, sign-out, group creation, invite joining, expense creation, and payment operations.
+2. Inspect `UserSessionManager`, `SplitSaathiRepository`, the Room entities, Supabase schema, RLS policies, and authentication configuration.
+3. Determine whether the current user ID is merely a locally generated identifier or is linked to a verified authentication identity.
+4. Do not mistake a locally saved profile for secure authentication.
+5. Choose and implement one coherent authentication approach compatible with the existing architecture. Prefer the existing Supabase backend if it is intended to be the production source of truth.
+6. Link every user-owned record to the authenticated identity enforced by the server.
+7. Implement the appropriate session persistence, sign-out, session expiration, and account-recovery behavior.
+8. Design the synchronization strategy between Room and Supabase. Define which layer is authoritative and how offline changes are reconciled.
+9. Implement synchronization for groups, memberships, expenses, participants, contributions, payment records, notifications, and activity history where applicable.
+10. Handle network failures, retries, duplicate submissions, stale updates, and conflicting changes safely.
+11. Prevent duplicate uploads and data loss during offline-to-online synchronization.
+12. Ensure that another user's records cannot be accessed simply by modifying a local ID.
+13. Verify reinstall, logout/login, account switching, and multi-device behavior.
+14. If the current repository lacks the credentials, provider configuration, or infrastructure necessary to complete a real integration, implement all safe work that can be completed locally and request only the missing information.
+
+### Verification
+
+Test registration, login, invalid credentials, session restoration, sign-out, access control, network interruption, synchronization, and two-user/two-device scenarios.
+
+**Pass condition:** The actual authentication and synchronization paths work in an authorized test environment. Do not claim cloud synchronization is complete if only local Room behavior has been tested.
+
+## 6. Workstream 3 — Supabase, PostgreSQL, RLS, and Backend Security
+
+### Objectives
+
+Ensure the database enforces the same security and business rules as the application.
+
+### Required actions
+
+1. Inspect every migration, table, foreign key, check constraint, unique index, RLS policy, grant, revoke, RPC function, trigger, and view.
+2. Verify RLS is enabled on every table that requires it.
+3. Verify policies for anonymous, authenticated, ordinary group-member, group-admin, group-owner, payer, and recipient roles as applicable.
+4. Review every `SECURITY DEFINER` function, its `search_path`, execution permissions, and authorization checks.
+5. Ensure a user can only access and mutate records they are authorized to access.
+6. Tighten payment-record update policies. Prevent users from changing immutable fields or performing invalid status transitions.
+7. Ensure contribution updates cannot bypass payment verification or group permissions.
+8. In `create_expense_with_shares`, validate:
+   - The caller is an authorized active group member.
+   - The payer belongs to the specified group.
+   - Every participant belongs to that group and is eligible to participate.
+   - Participant IDs are unique.
+   - Shares are valid and non-negative where applicable.
+   - The sum of shares exactly equals the expense amount.
+   - Invalid JSON, invalid UUIDs, overflow, and malformed values fail safely.
+9. Validate invite expiry, usage limits, membership status, and concurrent invite redemption.
+10. Enforce payment authorization, valid state transitions, amount limits, and duplicate-operation protection inside database transactions.
+11. Ensure balance calculations exclude cancelled expenses and count only appropriately confirmed settlements.
+12. Verify notifications and activity records are written consistently with the underlying business transaction.
+13. Ensure schema migrations can be applied repeatedly or safely tracked without accidentally duplicating or destroying production data.
+14. Run all SQL integration tests against a dedicated disposable test database or isolated Supabase project.
+15. Never run cleanup or destructive test scripts against production.
+16. Test unauthorized access attempts rather than testing only successful authorized requests.
+
+### Verification
+
+Create positive and negative tests for every critical policy and RPC. Include two-user tests, unauthorized writes, invalid participant membership, incorrect share totals, duplicate requests, expired invites, and concurrent operations.
+
+**Pass condition:** All critical authorization and accounting invariants are enforced server-side and the relevant integration tests pass.
+
+## 7. Workstream 4 — Financial Correctness and Atomic Payment Operations
+
+### Objectives
+
+Make expense splitting, balances, partial payments, confirmations, disputes, cancellations, and settlements consistent and reliable.
+
+### Required actions
+
+1. Audit `MoneyUtils.kt` and every function that creates or calculates expense shares.
+2. Use integer paise for monetary calculations. Avoid floating-point calculations for final financial allocations.
+3. Validate percentage totals, ratio weights, custom shares, participant uniqueness, zero values, negative values, and extreme inputs.
+4. Ensure rounding remainders are allocated deterministically so the final shares always equal the original amount.
+5. Protect all money totals from integer overflow.
+6. Correct partial-payment behavior. For an obligation of ₹1,000, confirmation of ₹400 must leave ₹600 outstanding.
+7. Prevent a contribution from being marked fully paid while any required amount remains unpaid.
+8. Prevent a single payment record from being confirmed, disputed, or resolved repeatedly through stale or concurrent requests.
+9. Use database transactions for related payment, contribution, notification, and activity-log changes.
+10. Add appropriate uniqueness constraints and idempotency handling.
+11. Do not rely on a newly generated idempotency key for every retry. A retry of the same logical operation must reuse its operation identifier.
+12. Validate the payer, recipient, group membership, payment amount, payment status, and current obligation before accepting a payment claim.
+13. Prevent overpayment, double counting, and unauthorized payment confirmation.
+14. Review `nudgePayment` authorization, pending-state checks, cooldown enforcement, and concurrency behavior.
+15. Review expense cancellation and dispute resolution when partial or confirmed payments already exist.
+16. Recalculate balances after every relevant state change and verify that all group-level totals remain consistent.
+17. Do not represent an external UPI payment as automatically verified merely because the user opens a UPI application or enters a reference number.
+
+### Required automated test cases
+
+- Equal split among 2, 3, 7, and many participants.
+- Amounts that cannot be divided evenly in paise.
+- Percentage split totaling exactly 100%.
+- Percentage split below or above 100%.
+- Ratio split with unequal weights and large remainders.
+- Duplicate participant IDs.
+- Zero, negative, and extremely large amounts.
+- Custom-share totals that are too low or too high.
+- Full payment and multiple partial payments.
+- Overpayment attempts.
+- Repeated payment confirmation.
+- Concurrent confirmation requests.
+- Disputed payment and dispute resolution.
+- Expense cancellation with pending and confirmed payments.
+- Duplicate operation retries.
+- Balance recalculation after each transition.
+
+**Pass condition:** Every financial invariant holds in automated tests, including concurrent and repeated operations.
+
+## 8. Workstream 5 — Android Database Migrations and Data Integrity
+
+### Objectives
+
+Prevent data loss during upgrades and ensure database operations remain consistent.
+
+### Required actions
+
+1. Audit `SplitSaathiDatabase.kt`, every Room entity, DAO, converter, query, and repository operation.
+2. Remove reliance on destructive fallback migrations for production data.
+3. Enable Room schema export and maintain version-controlled schema files.
+4. Implement the required migration paths from supported previous versions.
+5. Add migration tests that create a previous-version database, upgrade it, and verify existing data.
+6. Ensure foreign keys, unique constraints, indexes, and deletion behavior match the intended business rules.
+7. Use Room transactions for multi-step operations that must succeed or fail together.
+8. Ensure profile, expense, contribution, payment, notification, and activity records cannot become partially updated.
+9. Test database initialization, upgrade, downgrade handling, corrupted database recovery, and reinstall behavior where relevant.
+10. Ensure migration failures do not silently erase financial records.
+
+### Verification
+
+Run Room migration tests, DAO tests, repository tests, and upgrade tests against real test databases.
+
+**Pass condition:** Supported database upgrades preserve existing data and all transaction-related records remain consistent.
+
+## 9. Workstream 6 — Build, CI, Static Analysis, and Automated Testing
+
+### Objectives
+
+Create a repeatable process that proves the application builds and its tests pass.
+
+### Required actions
+
+1. Inspect the Gradle wrapper, Gradle plugins, Kotlin version, version catalog, compile SDK, target SDK, minimum SDK, dependencies, manifest, and signing configuration.
+2. Keep versions compatible. Upgrade dependencies only when justified by compatibility, security, or correctness.
+3. Run the Gradle wrapper from the repository root rather than relying on an unrelated system Gradle installation.
+4. Run the applicable commands, adjusting task names to the actual project configuration:
+
+   - `./gradlew clean`
+   - `./gradlew assembleDebug`
+   - `./gradlew test`
+   - `./gradlew lint`
+   - `./gradlew assembleRelease` when release prerequisites are available
+
+   On Windows, use `gradlew.bat` and the equivalent task names.
+
+5. Run instrumentation tests when an emulator or authorized device is available.
+6. Run static analysis, dependency vulnerability checks, and secret scanning where tooling is available.
+7. Add a GitHub Actions workflow for pull requests and pushes to the main development branch.
+8. Make CI report build failures, test failures, lint findings, and security findings separately.
+9. Do not commit secrets or expose sensitive environment values in CI logs.
+10. Verify release signing using an authorized keystore. Never generate or publish a fake signed release just to pass a check.
+11. Review backup rules, exported components, deep links, permissions, network security, and package identity.
+12. Ensure failures are not hidden by disabling tests, suppressing relevant lint checks, or weakening assertions.
+13. Run the full regression suite after the other workstreams have been fixed.
+
+### Verification
+
+Provide actual command output summaries, exit codes, test counts, skipped-test reasons, and artifact paths.
+
+**Pass condition:** The applicable build, tests, lint, and CI jobs pass. Tests that cannot run due to missing infrastructure must be explicitly marked BLOCKED, not PASS.
+
+## 10. Workstream 7 — Feature Completeness and Production Release Audit
+
+### Objectives
+
+Verify existing features before introducing new ones.
+
+### Required actions
+
+Audit the real implementation and user journey for:
+
+- Onboarding and account management.
+- Group creation, joining, invites, and member roles.
+- Expense creation and editing.
+- Equal, percentage, ratio, and custom splits where supported.
+- Expense history and group summaries.
+- Who-owes-whom calculations.
+- Partial payments and UPI handoff.
+- Payment confirmation, disputes, and resolution.
+- Nudges and notifications.
+- Expense cancellation.
+- Profile and UPI privacy.
+- CSV export and report sharing.
+- Deep links and navigation.
+- Offline behavior, synchronization, loading states, and error handling.
+
+For each feature:
+
+1. Trace the UI action through the ViewModel or repository, persistence layer, and backend where applicable.
+2. Test success, invalid input, unauthorized access, offline state, server failure, repeated taps, and recovery.
+3. Identify buttons that are placeholders, nonfunctional, or misleading.
+4. Verify the UI never reports success before the underlying operation succeeds.
+5. Ensure CSV exports correctly escape commas, quotes, and newlines and do not unintentionally leak sensitive information.
+6. Check accessibility, application backup behavior, sensitive-data handling, and release configuration.
+7. Verify that UPI handoff does not falsely claim the external payment was completed or verified.
+8. Create a feature matrix with PASS, FAIL, PARTIAL, or BLOCKED status and evidence.
+
+Only after the existing core workflows are stable, prepare a prioritized list of additional features such as recurring expenses, budgets, receipt OCR, PDF statements, push notifications, and enhanced analytics.
+
+Do not begin optional feature development while a critical security, accounting, or data-integrity defect remains.
+
+## 11. Mandatory Retry and Failure-Handling Protocol
+
+For every failed build, test, migration, security check, or feature flow:
+
+### Attempt 1 — Diagnose
+
+- Capture the exact error, failing test, stack trace, and relevant logs.
+- Identify the likely root cause.
+- Inspect the related source and configuration.
+
+### Attempt 2 — Apply a targeted fix
+
+- Correct the underlying problem.
+- Review the diff.
+- Run the smallest relevant test again.
+
+### Attempt 3 — Validate the fix
+
+- Run the failed test plus related regression tests.
+- Check whether the failure moved to another code path or created a new regression.
+
+### Attempt 4 — Final justified retry
+
+- If the issue remains, perform a distinct diagnostic or corrective attempt when safe.
+- Do not repeat an identical failed command without a reason.
+- Do not weaken security, accounting rules, or assertions to obtain a passing result.
+
+After these attempts:
+
+- If successful, mark the issue FIXED and include the evidence.
+- If unsuccessful, mark it BLOCKED or UNRESOLVED.
+- Include the root cause, attempts performed, exact failing command or test, relevant error summary, changes already made, missing prerequisites, and the specific action required from me.
+- State whether the issue is caused by code, environment, credentials, permissions, unavailable infrastructure, or an unresolved technical limitation.
+- Continue with independent workstreams wherever safe.
+
+A retry is not a pass. Only a successful verification counts as PASS.
+
+## 12. User Input and Credential Requests
+
+If you need information or access that only I can provide:
+
+1. Ask a specific question describing exactly what is missing and why it is needed.
+2. Ask for the minimum necessary information.
+3. Separate public configuration values from sensitive credentials.
+4. Never ask me to paste passwords, private keys, service-role keys, database connection strings, or signing secrets directly into chat when a secure local configuration method is available.
+5. For credentials, provide instructions for setting environment variables or configuring the relevant secret manager locally.
+6. Use placeholders in all examples and logs.
+7. Wait for my response when the missing input is a hard blocker. Continue with independent tasks in the meantime.
+8. Never fabricate credentials, pretend to have access, or silently skip a blocked integration.
+9. Never use production credentials in tests or destructive scripts.
+10. Before any irreversible or production-impacting operation, explain the exact operation, its risk, and obtain my explicit approval.
+
+## 13. Git and Change Management
+
+- Inspect `git status` before making changes.
+- Preserve all unrelated user modifications.
+- Make focused, reviewable changes.
+- Do not overwrite files blindly.
+- Do not delete tests or migrations without a justified replacement.
+- Review the diff after each workstream.
+- Check for accidental credentials, generated artifacts, unrelated formatting changes, and new dependency risks.
+- Run relevant tests before moving to the next workstream.
+- Do not commit or push unless explicitly authorized.
+- Keep a clear mapping between each finding, its fix, and the test that validates it.
+
+## 14. Required Final Deliverables
+
+At the end, provide:
+
+### A. Executive Summary
+
+- Overall result: READY FOR FINAL HUMAN REVIEW, NOT READY, or BLOCKED.
+- Critical and high-priority issues remaining.
+- Whether a release build was actually produced.
+- Whether a real backend integration was tested.
+- Whether any workstream remains unverified.
+
+### B. Seven-Workstream Results Table
+
+For each workstream, report:
+
+- Initial finding.
+- Files changed.
+- Root cause.
+- Fix implemented.
+- Tests executed.
+- Test result and evidence.
+- Retry count where applicable.
+- Remaining limitations.
+- Final status: PASS, FAIL, PARTIAL, or BLOCKED.
+
+### C. Test Execution Report
+
+List the actual commands executed, their exit codes, the number of tests passed/failed/skipped when available, and any build artifacts created.
+
+Clearly distinguish static code review from tests actually executed.
+
+### D. Security Report
+
+List secret-scanning results, credential rotation status, RLS findings, authentication findings, and any unresolved vulnerabilities without exposing secret values.
+
+### E. Financial Integrity Report
+
+Summarize the split calculations tested, partial-payment scenarios, concurrent-operation tests, duplicate-payment protections, and balance consistency results.
+
+### F. Remaining Issues
+
+For every unresolved issue, provide:
+
+- Exact file or component.
+- Root cause or best-supported diagnosis.
+- Attempts performed.
+- Why it remains unresolved.
+- Required user input, permission, infrastructure, or follow-up change.
+- Safe next step.
+
+### G. Release Checklist
+
+Provide a final checklist covering build, tests, security, database migrations, authentication, cloud sync, financial integrity, signing, and deployment readiness.
+
+### H. Final Recommendation
+
+State clearly whether the current code should be released, should remain in testing, or is blocked. Do not describe it as production-ready merely because the app compiles.
+
+## 15. Execution Order
+
+Execute these workstreams in this order:
+
+1. Credentials and repository security.
+2. Authentication and cloud synchronization.
+3. Supabase/PostgreSQL/RLS security.
+4. Financial correctness and payment transactions.
+5. Room migrations and local data integrity.
+6. Build, CI, static analysis, and regression tests.
+7. Feature completeness and production release verification.
+
+Fix dependencies between workstreams when necessary, but preserve this priority order.
+
+After all fixes, run the full available regression suite again.
+
+Begin now by inspecting the repository, checking its working state, and running the baseline checks. Do not stop after writing a plan. Make the actual changes that are safe and authorized, request missing information when necessary, and produce the evidence-based final report.

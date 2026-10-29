@@ -215,7 +215,8 @@ private fun buildCsv(expenses: List<ExpenseEntity>): String {
     for (e in expenses) {
         val dateStr = df.format(Date(e.expenseDate))
         val amountStr = MoneyUtils.formatPaiseForUpi(e.amountPaise)
-        sb.append("\"$dateStr\",\"${e.title.replace("\"", "\"\"")}\",\"${e.category.label}\",\"$amountStr\",\"${e.splitType.name}\",\"${e.status.name}\"\n")
+        val cleanTitle = e.title.replace("\"", "\"\"").replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+        sb.append("\"$dateStr\",\"$cleanTitle\",\"${e.category.label}\",\"$amountStr\",\"${e.splitType.name}\",\"${e.status.name}\"\n")
     }
     return sb.toString()
 }

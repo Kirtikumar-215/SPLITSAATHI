@@ -480,6 +480,14 @@ class SplitSaathiRepository(
                 return@withContext Result.failure(IllegalStateException("Only the recipient can confirm this payment (or group admin after 7 days)"))
             }
 
+            if (record.status == PaymentStatus.PAID_CONFIRMED) {
+                return@withContext Result.failure(IllegalStateException("Payment record has already been confirmed"))
+            }
+
+            if (record.status != PaymentStatus.PAID_PENDING_CONFIRMATION && record.status != PaymentStatus.DISPUTED) {
+                return@withContext Result.failure(IllegalStateException("Invalid payment status for confirmation"))
+            }
+
             val updatedRecord = record.copy(
                 status = PaymentStatus.PAID_CONFIRMED,
                 respondedAt = System.currentTimeMillis(),
@@ -530,6 +538,9 @@ class SplitSaathiRepository(
             if (callerId != record.toUser) {
                 return@withContext Result.failure(IllegalStateException("Only the recipient can dispute a payment claim"))
             }
+            if (record.status == PaymentStatus.PAID_CONFIRMED) {
+                return@withContext Result.failure(IllegalStateException("Cannot dispute an already confirmed payment"))
+            }
             if (reason.trim().isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("Dispute reason is mandatory"))
             }
@@ -565,6 +576,14 @@ class SplitSaathiRepository(
         return withContext(Dispatchers.IO) {
             val record = db.paymentDao().getPaymentById(paymentId)
                 ?: return@withContext Result.failure(IllegalStateException("Payment not found"))
+
+            val callerId = _currentUserId.value
+            if (callerId != record.fromUser) {
+                return@withContext Result.failure(IllegalStateException("Only the debtor can nudge the recipient"))
+            }
+            if (record.status != PaymentStatus.PAID_PENDING_CONFIRMATION) {
+                return@withContext Result.failure(IllegalStateException("Cannot nudge a payment that is not pending confirmation"))
+            }
 
             val now = System.currentTimeMillis()
             val lastNudge = record.lastNudgedAt ?: 0L

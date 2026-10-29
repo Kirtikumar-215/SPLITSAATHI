@@ -374,17 +374,53 @@ DECLARE
     v_user_id UUID;
     v_share BIGINT;
     v_total_shares BIGINT := 0;
+    v_participant_ids UUID[] := ARRAY[]::UUID[];
 BEGIN
     IF v_creator_id IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
     IF NOT public.is_group_member(p_group_id, v_creator_id) THEN
-        RAISE EXCEPTION 'Not an active group member';
+        RAISE EXCEPTION 'Caller is not an active group member';
+    END IF;
+
+    IF NOT public.is_group_member(p_group_id, p_paid_by) THEN
+        RAISE EXCEPTION 'Payer is not an active member of this group';
     END IF;
 
     IF p_amount_paise <= 0 THEN
         RAISE EXCEPTION 'Expense amount must be positive';
+    END IF;
+
+    IF p_participants IS NULL OR jsonb_array_length(p_participants) = 0 THEN
+        RAISE EXCEPTION 'At least one participant is required';
+    END IF;
+
+    -- Pre-validate all participants before creating any records
+    FOR v_item IN SELECT * FROM jsonb_array_elements(p_participants)
+    LOOP
+        v_user_id := (v_item->>'user_id')::UUID;
+        v_share := (v_item->>'share_paise')::BIGINT;
+
+        IF v_share < 0 THEN
+            RAISE EXCEPTION 'Participant share cannot be negative';
+        END IF;
+
+        IF NOT public.is_group_member(p_group_id, v_user_id) THEN
+            RAISE EXCEPTION 'Participant % is not an active member of this group', v_user_id;
+        END IF;
+
+        IF v_user_id = ANY(v_participant_ids) THEN
+            RAISE EXCEPTION 'Duplicate participant detected: %', v_user_id;
+        END IF;
+
+        v_participant_ids := array_append(v_participant_ids, v_user_id);
+        v_total_shares := v_total_shares + v_share;
+    END LOOP;
+
+    -- Strict check: sum of shares must equal total amount exactly
+    IF v_total_shares != p_amount_paise THEN
+        RAISE EXCEPTION 'Sum of participant shares (%) does not equal total expense amount (%)', v_total_shares, p_amount_paise;
     END IF;
 
     -- Create Expense record
@@ -399,7 +435,6 @@ BEGIN
     LOOP
         v_user_id := (v_item->>'user_id')::UUID;
         v_share := (v_item->>'share_paise')::BIGINT;
-        v_total_shares := v_total_shares + v_share;
 
         -- Record participant share
         INSERT INTO public.expense_participants (expense_id, user_id, share_paise)
@@ -447,6 +482,7 @@ DECLARE
     v_pay_record RECORD;
     v_contribution RECORD;
     v_expense RECORD;
+    v_confirmed_sum BIGINT := 0;
 BEGIN
     IF v_caller_id IS NULL THEN
         RAISE EXCEPTION 'Not authenticated';
@@ -465,6 +501,10 @@ BEGIN
         RAISE EXCEPTION 'Only the payment recipient can confirm or dispute this payment';
     END IF;
 
+    IF v_pay_record.status = 'paid_confirmed' THEN
+        RAISE EXCEPTION 'Payment record has already been confirmed';
+    END IF;
+
     SELECT * INTO v_contribution
     FROM public.contributions
     WHERE id = v_pay_record.contribution_id
@@ -481,11 +521,25 @@ BEGIN
             responded_by = v_caller_id
         WHERE id = p_payment_record_id;
 
-        UPDATE public.contributions
-        SET status = 'paid_confirmed',
-            committed_paise = v_pay_record.amount_paise,
-            updated_at = NOW()
-        WHERE id = v_contribution.id;
+        -- Compute cumulative confirmed payments for this contribution
+        SELECT COALESCE(SUM(amount_paise), 0)::BIGINT INTO v_confirmed_sum
+        FROM public.payment_records
+        WHERE contribution_id = v_contribution.id AND status = 'paid_confirmed';
+
+        -- If confirmed total satisfies obligation, mark contribution confirmed, otherwise leave will_pay with updated committed amount
+        IF v_confirmed_sum >= v_contribution.share_paise THEN
+            UPDATE public.contributions
+            SET status = 'paid_confirmed',
+                committed_paise = v_confirmed_sum,
+                updated_at = NOW()
+            WHERE id = v_contribution.id;
+        ELSE
+            UPDATE public.contributions
+            SET status = 'will_pay',
+                committed_paise = v_confirmed_sum,
+                updated_at = NOW()
+            WHERE id = v_contribution.id;
+        END IF;
 
         INSERT INTO public.activity_logs (group_id, actor_id, entity_type, entity_id, action, new_value)
         VALUES (v_expense.group_id, v_caller_id, 'payment_record', p_payment_record_id, 'confirmed', jsonb_build_object('amount_paise', v_pay_record.amount_paise));
@@ -503,11 +557,15 @@ BEGIN
         RETURN TRUE;
 
     ELSIF p_action = 'dispute' THEN
+        IF p_dispute_reason IS NULL OR trim(p_dispute_reason) = '' THEN
+            RAISE EXCEPTION 'Dispute reason is mandatory';
+        END IF;
+
         UPDATE public.payment_records
         SET status = 'disputed',
             responded_at = NOW(),
             responded_by = v_caller_id,
-            dispute_reason = p_dispute_reason
+            dispute_reason = trim(p_dispute_reason)
         WHERE id = p_payment_record_id;
 
         UPDATE public.contributions
@@ -524,7 +582,7 @@ BEGIN
             v_expense.group_id,
             'payment_disputed',
             'Payment Disputed',
-            format('Your payment claim was disputed: %s', COALESCE(p_dispute_reason, 'No reason provided')),
+            format('Your payment claim was disputed: %s', trim(p_dispute_reason)),
             jsonb_build_object('payment_id', p_payment_record_id)
         );
 

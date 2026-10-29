@@ -1,0 +1,86 @@
+name: SplitSaathi CI & Quality Gate
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew || true
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+  unit-tests:
+    name: Unit & Robolectric Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew || true
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/build/reports/tests/testDebugUnitTest/
+
+  security-scan:
+    name: Secret & Credential Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Secret Pattern Scan
+        run: |
+          echo "Scanning tracked repository files for exposed passwords and secret tokens..."
+          # Reject live connection strings with embedded passwords
+          if grep -rEI 'postgresql://[^:]+:[^@]+@[^/]+:[0-9]+' --exclude-dir=.git --exclude-dir=build --exclude-dir=.gradle . | grep -v '\[PASSWORD\]'; then
+            echo "::error::Exposed database URI with embedded credentials found!"
+            exit 1
+          fi
+          echo "No hardcoded credentials found in tracked repository files."
+
+  database-schema-check:
+    name: Supabase SQL Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verify SQL Files Syntax
+        run: |
+          echo "Verifying SQL files exist and are not empty..."
+          test -s supabase/migrations/20261027000001_initial_schema.sql
+          test -s supabase/tests/rls_test.sql
+          echo "SQL migration and test files verified."

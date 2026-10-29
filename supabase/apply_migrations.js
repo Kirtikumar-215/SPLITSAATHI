@@ -1,7 +1,24 @@
-const fs = require('fs');
-const { Client } = require('/tmp/pg_runner/node_modules/pg');
+const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 
-const connectionString = "postgresql://postgres.ryjtsiyjlhasrjwijgpx:Kirti@2007%23Kirtikumar$CodER@aws-0-eu-west-1.pooler.supabase.com:5432/postgres";
+if (!connectionString) {
+  console.error("Error: Missing database connection string.");
+  console.error("Please set SUPABASE_DB_URL or DATABASE_URL in your environment before running this script.");
+  console.error("Example: export SUPABASE_DB_URL='postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres'");
+  process.exit(1);
+}
+
+const fs = require('fs');
+let Client;
+try {
+  Client = require('pg').Client;
+} catch (e) {
+  try {
+    Client = require('/tmp/pg_runner/node_modules/pg').Client;
+  } catch (err) {
+    console.error("Error: 'pg' module not found. Run 'npm install pg' first.");
+    process.exit(1);
+  }
+}
 
 async function applyMigration() {
   const client = new Client({

@@ -32,12 +32,19 @@ async function applyMigration() {
     await client.connect();
     console.log("Connected to Supabase PostgreSQL.");
 
-    const migrationPath = path.join(__dirname, 'migrations', '20261027000001_initial_schema.sql');
-    const sql = fs.readFileSync(migrationPath, 'utf8');
+    const migrationsDir = path.join(__dirname, 'migrations');
+    const files = fs.readdirSync(migrationsDir)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
 
-    console.log("Applying migration 20261027000001_initial_schema.sql...");
-    await client.query(sql);
-    console.log("Migration executed successfully!");
+    console.log(`Found ${files.length} migration files in order:`, files);
+    for (const file of files) {
+      const filePath = path.join(migrationsDir, file);
+      const sql = fs.readFileSync(filePath, 'utf8');
+      console.log(`\nApplying migration: ${file}...`);
+      await client.query(sql);
+      console.log(`Successfully applied: ${file}`);
+    }
 
     console.log("\n--- PUBLIC TABLES & ROW LEVEL SECURITY STATUS ---");
     const tablesRes = await client.query(`

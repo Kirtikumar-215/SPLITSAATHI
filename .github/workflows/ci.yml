@@ -82,5 +82,6 @@ jobs:
         run: |
           echo "Verifying SQL files exist and are not empty..."
           test -s supabase/migrations/20261027000001_initial_schema.sql
+          test -s supabase/migrations/20261030000001_security_hardening_v2.sql
           test -s supabase/tests/rls_test.sql
           echo "SQL migration and test files verified."

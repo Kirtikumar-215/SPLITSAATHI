@@ -18,6 +18,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var repository: SplitSaathiRepository
     private var initialDeepLinkCode: String? = null
+    private var initialAuthDeepLink: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,13 +29,15 @@ class MainActivity : ComponentActivity() {
         repository = SplitSaathiRepository(db, sessionManager)
 
         initialDeepLinkCode = extractDeepLinkCode(intent)
+        initialAuthDeepLink = extractAuthDeepLink(intent)
 
         setContent {
             SplitSaathiTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     MainScreen(
                         repository = repository,
-                        initialDeepLinkCode = initialDeepLinkCode
+                        initialDeepLinkCode = initialDeepLinkCode,
+                        initialAuthDeepLink = initialAuthDeepLink
                     )
                 }
             }
@@ -48,6 +51,10 @@ class MainActivity : ComponentActivity() {
         if (code != null) {
             initialDeepLinkCode = code
         }
+        val authLink = extractAuthDeepLink(intent)
+        if (authLink != null) {
+            initialAuthDeepLink = authLink
+        }
     }
 
     private fun extractDeepLinkCode(intent: Intent?): String? {
@@ -58,6 +65,14 @@ class MainActivity : ComponentActivity() {
             if (pathSegments.isNotEmpty()) {
                 return pathSegments[0]
             }
+        }
+        return null
+    }
+
+    private fun extractAuthDeepLink(intent: Intent?): String? {
+        val data: Uri? = intent?.data ?: return null
+        if (data.scheme == "splitsaathi" && (data.host == "reset-password" || data.host == "auth")) {
+            return data.toString()
         }
         return null
     }

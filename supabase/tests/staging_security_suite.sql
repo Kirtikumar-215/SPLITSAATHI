@@ -316,6 +316,7 @@ END $$;
 -- =================================================================================================
 -- SECURITY ASSERTION 11: Account anonymization preserves shared financial history
 -- =================================================================================================
+-- 11a. Priya deactivates account and anonymizes PII
 SET LOCAL "request.jwt.claims" = '{"sub": "22222222-2222-2222-2222-222222222222", "role": "authenticated"}';
 DO $$
 DECLARE
@@ -323,8 +324,7 @@ DECLARE
     v_name TEXT;
     v_phone TEXT;
     v_upi TEXT;
-    cnt_expenses INT;
-    cnt_payments INT;
+    cnt_expenses_priya INT;
 BEGIN
     SELECT public.anonymize_user_account() INTO v_success;
     IF NOT v_success THEN
@@ -340,13 +340,39 @@ BEGIN
         RAISE EXCEPTION 'TEST 11 FAILED: Personal details were not sanitized!';
     END IF;
 
-    -- Verify that financial history remains intact
-    SELECT count(*) INTO cnt_expenses FROM public.expenses WHERE group_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-    SELECT count(*) INTO cnt_payments FROM public.payment_records WHERE contribution_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
-    IF cnt_expenses = 0 OR cnt_payments = 0 THEN
-        RAISE EXCEPTION 'TEST 11 FAILED: Financial records were accidentally deleted during anonymization!';
+    -- Verify departed user (Priya) can no longer access group expenses under RLS (status = 'left')
+    SELECT count(*) INTO cnt_expenses_priya
+    FROM public.expenses
+    WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbb01';
+
+    IF cnt_expenses_priya <> 0 THEN
+        RAISE EXCEPTION 'TEST 11a FAILED: Deactivated user who left group can still read private expenses!';
     END IF;
-    RAISE NOTICE 'TEST 11 PASSED: Account anonymized while financial history preserved.';
+END $$;
+
+-- 11b. Switch identity to active group member Amit to verify financial ledger preservation
+SET LOCAL "request.jwt.claims" = '{"sub": "33333333-3333-3333-3333-333333333333", "role": "authenticated"}';
+DO $$
+DECLARE
+    cnt_expense_amit INT;
+    cnt_payment_amit INT;
+BEGIN
+    -- Verify exact expense record still exists and is accessible to active member Amit
+    SELECT count(*) INTO cnt_expense_amit
+    FROM public.expenses
+    WHERE id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbb01'
+      AND group_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+
+    -- Verify exact payment record still exists and is accessible to active member Amit
+    SELECT count(*) INTO cnt_payment_amit
+    FROM public.payment_records
+    WHERE contribution_id = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
+
+    IF cnt_expense_amit = 0 OR cnt_payment_amit = 0 THEN
+        RAISE EXCEPTION 'TEST 11b FAILED: Financial records were accidentally deleted during anonymization!';
+    END IF;
+
+    RAISE NOTICE 'TEST 11 PASSED: Account anonymized, departed user access revoked, and financial ledger preserved.';
 END $$;
 
 -- =================================================================================================

@@ -37,7 +37,8 @@ import com.example.util.MoneyUtils
 
 @Composable
 fun OnboardingScreen(
-    onProfileCreated: (name: String, phone: String, upiId: String?, upiConsent: Boolean) -> Unit
+    onProfileCreated: (name: String, phone: String, upiId: String?, upiConsent: Boolean) -> Unit,
+    onOpenAuth: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var currentStep by remember { mutableIntStateOf(0) }
@@ -391,7 +392,19 @@ fun OnboardingScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                if (onOpenAuth != null) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    TextButton(
+                        onClick = onOpenAuth,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("onboarding_open_login_btn")
+                    ) {
+                        Text("Already have a cloud account? Sign In", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
                 DisclaimerBanner()
             }
         }

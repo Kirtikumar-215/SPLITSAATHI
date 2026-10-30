@@ -23,19 +23,28 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.data.model.GroupEntity
+import com.example.data.remote.auth.AuthState
 import com.example.data.repository.SplitSaathiRepository
+import com.example.ui.screens.auth.AuthViewModel
+import com.example.ui.screens.auth.LoginScreen
+import com.example.ui.screens.auth.RegisterScreen
+import com.example.ui.screens.auth.ResetPasswordDialog
 import kotlinx.coroutines.launch
 
 sealed class Screen {
     object Onboarding : Screen()
     object MainTabs : Screen()
     data class GroupDetail(val groupId: String) : Screen()
+    object Login : Screen()
+    object Register : Screen()
+    object ResetPassword : Screen()
 }
 
 @Composable
 fun MainScreen(
     repository: SplitSaathiRepository,
-    initialDeepLinkCode: String? = null
+    initialDeepLinkCode: String? = null,
+    initialAuthDeepLink: String? = null
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -44,6 +53,9 @@ fun MainScreen(
     val userGroups by repository.observeUserGroups().collectAsStateWithLifecycle(initialValue = emptyList())
     val notifications by repository.observeNotifications().collectAsStateWithLifecycle(initialValue = emptyList())
     val currentUserId by repository.currentUserId.collectAsStateWithLifecycle()
+
+    val authViewModel: AuthViewModel = remember { AuthViewModel() }
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
 
     var currentScreen by remember(currentUserId) {
         mutableStateOf<Screen>(if (currentUserId.isEmpty()) Screen.Onboarding else Screen.MainTabs)
@@ -67,6 +79,15 @@ fun MainScreen(
         }
     }
 
+    // Supabase Auth deep link handler
+    LaunchedEffect(initialAuthDeepLink) {
+        if (!initialAuthDeepLink.isNullOrBlank()) {
+            if (initialAuthDeepLink.contains("reset-password") || initialAuthDeepLink.contains("type=recovery")) {
+                currentScreen = Screen.ResetPassword
+            }
+        }
+    }
+
     when (val screen = currentScreen) {
         is Screen.Onboarding -> {
             OnboardingScreen(
@@ -80,6 +101,9 @@ fun MainScreen(
                         )
                         currentScreen = Screen.MainTabs
                     }
+                },
+                onOpenAuth = {
+                    currentScreen = Screen.Login
                 }
             )
         }
@@ -356,11 +380,81 @@ fun MainScreen(
                                         Toast.makeText(context, res.exceptionOrNull()?.message ?: "Failed to reset account", Toast.LENGTH_LONG).show()
                                     }
                                 }
+                            },
+                            authState = authState,
+                            onOpenAuth = { currentScreen = Screen.Login },
+                            onCloudSignOut = {
+                                authViewModel.signOut {
+                                    Toast.makeText(context, "Signed out from Cloud", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         )
                     }
                 }
             }
+        }
+        is Screen.Login -> {
+            BackHandler {
+                currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Onboarding
+            }
+            LoginScreen(
+                authViewModel = authViewModel,
+                onLoginSuccess = {
+                    coroutineScope.launch {
+                        if (currentUserId.isEmpty()) {
+                            val email = (authViewModel.authState.value as? AuthState.Authenticated)?.email ?: "User"
+                            val displayName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+                            repository.createAccount(name = displayName)
+                        }
+                        currentScreen = Screen.MainTabs
+                    }
+                },
+                onNavigateToRegister = { currentScreen = Screen.Register },
+                onSkipOffline = {
+                    currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Onboarding
+                },
+                onBack = {
+                    currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Onboarding
+                }
+            )
+        }
+        is Screen.Register -> {
+            BackHandler {
+                currentScreen = Screen.Login
+            }
+            RegisterScreen(
+                authViewModel = authViewModel,
+                onRegisterSuccess = {
+                    coroutineScope.launch {
+                        if (currentUserId.isEmpty()) {
+                            val email = (authViewModel.authState.value as? AuthState.Authenticated)?.email ?: "User"
+                            val displayName = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+                            repository.createAccount(name = displayName)
+                        }
+                        currentScreen = Screen.MainTabs
+                    }
+                },
+                onNavigateToLogin = { currentScreen = Screen.Login },
+                onSkipOffline = {
+                    currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Onboarding
+                },
+                onBack = { currentScreen = Screen.Login }
+            )
+        }
+        is Screen.ResetPassword -> {
+            BackHandler {
+                currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Login
+            }
+            ResetPasswordDialog(
+                authViewModel = authViewModel,
+                onSuccess = {
+                    Toast.makeText(context, "Password updated successfully! Please sign in.", Toast.LENGTH_LONG).show()
+                    currentScreen = Screen.Login
+                },
+                onDismiss = {
+                    currentScreen = if (currentUserId.isNotEmpty()) Screen.MainTabs else Screen.Login
+                }
+            )
         }
     }
 

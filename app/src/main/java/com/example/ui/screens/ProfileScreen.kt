@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.model.ProfileEntity
 import com.example.ui.components.AvatarView
+import androidx.compose.material.icons.outlined.Cloud
+import com.example.data.remote.auth.AuthState
 import com.example.ui.components.DisclaimerBanner
 import com.example.ui.components.SplitSaathiTopBar
 import com.example.util.MoneyUtils
@@ -36,7 +38,10 @@ fun ProfileScreen(
     currentProfile: ProfileEntity?,
     onSaveProfile: (displayName: String, phone: String?, upiId: String?, upiConsent: Boolean, avatarKey: String) -> Unit,
     onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit = {}
+    onDeleteAccount: () -> Unit = {},
+    authState: AuthState = AuthState.SignedOut,
+    onOpenAuth: () -> Unit = {},
+    onCloudSignOut: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var displayName by remember(currentProfile) { mutableStateOf(currentProfile?.displayName ?: "") }
@@ -95,6 +100,99 @@ fun ProfileScreen(
                         fontWeight = FontWeight.SemiBold
                     )
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Cloud Account Card
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = when (authState) {
+                        is AuthState.Authenticated -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    }
+                ),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_cloud_auth_card")
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Outlined.Cloud,
+                                contentDescription = null,
+                                tint = if (authState is AuthState.Authenticated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (authState is AuthState.Authenticated) "Cloud Account" else "Local Mode",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+
+                        if (authState is AuthState.Authenticated) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "Connected",
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (authState is AuthState.Authenticated) {
+                        Text(
+                            text = "Email: ${authState.email ?: "Google Account"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Cloud ID: ${authState.userId}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = onCloudSignOut,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("profile_cloud_signout_btn")
+                        ) {
+                            Text("Sign Out of Cloud Account")
+                        }
+                    } else {
+                        Text(
+                            text = "Sign in to SplitSaathi cloud to sync groups, verify member transactions, and collaborate seamlessly across devices.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = onOpenAuth,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("profile_cloud_signin_btn")
+                        ) {
+                            Text("Sign In or Register Cloud Account")
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

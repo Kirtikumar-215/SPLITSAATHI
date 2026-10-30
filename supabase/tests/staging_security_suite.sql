@@ -250,14 +250,14 @@ DECLARE
     v_caught BOOLEAN := FALSE;
 BEGIN
     -- 9a. Valid claim of ₹500 from Priya for dinner
-    SELECT public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 50000L, 'UPI-REF-9988', 'Paid via GPay') INTO v_payment_id;
+    SELECT public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 50000, 'UPI-REF-9988', 'Paid via GPay') INTO v_payment_id;
     IF v_payment_id IS NULL THEN
         RAISE EXCEPTION 'TEST 9a FAILED: Valid payment claim returned NULL!';
     END IF;
 
     -- 9b. Duplicate claim attempt while pending confirmation MUST be rejected
     BEGIN
-        PERFORM public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 50000L, 'UPI-REF-DUP', 'Duplicate');
+        PERFORM public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 50000, 'UPI-REF-DUP', 'Duplicate');
     EXCEPTION WHEN OTHERS THEN
         v_caught := TRUE;
     END;
@@ -378,7 +378,7 @@ DECLARE
     v_caught BOOLEAN := FALSE;
 BEGIN
     BEGIN
-        PERFORM public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 1000L);
+        PERFORM public.claim_payment('cccccccc-cccc-cccc-cccc-cccccccccc01', 1000);
     EXCEPTION WHEN OTHERS THEN
         v_caught := TRUE;
     END;

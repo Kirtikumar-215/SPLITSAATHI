@@ -201,14 +201,14 @@ BEGIN
 
     IF v_contrib_id IS NOT NULL THEN
         -- 6a. Valid claim should succeed
-        SELECT public.claim_payment(v_contrib_id, 61667L, 'UPI-TEST-12345', 'Settling dinner') INTO v_payment_id;
+        SELECT public.claim_payment(v_contrib_id, 61667, 'UPI-TEST-12345', 'Settling dinner') INTO v_payment_id;
         IF v_payment_id IS NULL THEN
             RAISE EXCEPTION 'RPC FAIL: Valid payment claim returned NULL!';
         END IF;
 
         -- 6b. Duplicate claim while previous is pending confirmation MUST be rejected
         BEGIN
-            PERFORM public.claim_payment(v_contrib_id, 61667L, 'UPI-TEST-DUP', 'Duplicate attempt');
+            PERFORM public.claim_payment(v_contrib_id, 61667, 'UPI-TEST-DUP', 'Duplicate attempt');
         EXCEPTION WHEN OTHERS THEN
             v_caught := TRUE;
         END;

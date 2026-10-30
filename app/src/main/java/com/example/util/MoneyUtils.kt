@@ -197,7 +197,7 @@ object MoneyUtils {
      * Validates UPI ID format with regex.
      */
     fun isValidUpiId(upiId: String): Boolean {
-        val regex = Regex("""^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$""")
+        val regex = Regex("""^[a-zA-Z0-9._-]{2,255}@[a-zA-Z]{2,64}$""")
         return regex.matches(upiId.trim())
     }
 

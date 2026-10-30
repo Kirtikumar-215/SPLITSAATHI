@@ -73,6 +73,11 @@ WHERE p.id = (SELECT auth.uid()) OR public.shares_active_group((SELECT auth.uid(
 
 GRANT SELECT ON public.member_profiles TO authenticated;
 
+-- Ensure profiles table UPI ID check constraint conforms to PostgreSQL DUPMAX repetition limit (255)
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_upi_id_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_upi_id_check
+    CHECK (upi_id IS NULL OR upi_id ~* '^[a-zA-Z0-9._-]{2,255}@[a-zA-Z]{2,64}$');
+
 -- =================================================================================================
 -- 3. GROUP MEMBERS: PREVENT DIRECT MEMBERSHIP INJECTION & RECURSION
 -- =================================================================================================

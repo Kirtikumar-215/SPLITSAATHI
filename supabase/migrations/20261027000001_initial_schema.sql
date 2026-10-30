@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     phone TEXT CHECK (phone IS NULL OR phone ~* '^[6-9][0-9]{9}$'),
     email TEXT,
     avatar_key TEXT NOT NULL DEFAULT 'avatar_1',
-    upi_id TEXT CHECK (upi_id IS NULL OR upi_id ~* '^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$'),
+    upi_id TEXT CHECK (upi_id IS NULL OR upi_id ~* '^[a-zA-Z0-9._-]{2,255}@[a-zA-Z]{2,64}$'),
     upi_consent BOOLEAN NOT NULL DEFAULT FALSE,
     upi_consent_at TIMESTAMPTZ,
     preferences JSONB NOT NULL DEFAULT '{"notify_expense": true, "notify_payment": true, "notify_nudge": true}'::jsonb,

@@ -1,3 +1,6 @@
+const path = require('path');
+const fs = require('fs');
+
 const connectionString = process.env.SUPABASE_TEST_DB_URL || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
@@ -7,7 +10,6 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const fs = require('fs');
 let Client;
 try {
   Client = require('pg').Client;
@@ -31,14 +33,16 @@ async function runTests() {
     console.log("Connected to Supabase PostgreSQL.");
 
     console.log("\n1. Applying seed.test.sql (Realistic Indian test data: Rahul, Priya, Amit, Sneha)...");
-    const seedSql = fs.readFileSync('/app/applet/supabase/seed.test.sql', 'utf8');
+    const seedPath = path.join(__dirname, '..', 'seed.test.sql');
+    const seedSql = fs.readFileSync(seedPath, 'utf8');
     await client.query(seedSql);
     console.log("Seed data applied successfully!");
 
     console.log("\n2. Executing rls_test.sql (RLS enforcement & non-member isolation)...");
-    const rlsSql = fs.readFileSync('/app/applet/supabase/tests/rls_test.sql', 'utf8');
+    const rlsPath = path.join(__dirname, 'rls_test.sql');
+    const rlsSql = fs.readFileSync(rlsPath, 'utf8');
     await client.query(rlsSql);
-    console.log("RLS tests passed successfully! Non-member Sneha isolated from group & expenses; member Rahul can access; UPI access restricted.");
+    console.log("RLS tests passed successfully! Non-member isolated; member access verified; UPI access restricted.");
 
     console.log("\n3. Testing RPC compute_group_balances for Goa Trip 2026...");
     const balanceRes = await client.query(`
@@ -67,7 +71,9 @@ async function runTests() {
 
     await client.end();
   } catch (err) {
-    console.error("Test execution failed:", err);
+    const sanitizedMsg = (err && err.message ? err.message : String(err))
+      .replace(/:\/\/[^:]+:[^@]+@/, '://[REDACTED_USER]:[REDACTED_PASSWORD]@');
+    console.error("Test execution failed:", sanitizedMsg);
     process.exit(1);
   }
 }

@@ -1,3 +1,6 @@
+const path = require('path');
+const fs = require('fs');
+
 const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
 
 if (!connectionString) {
@@ -7,7 +10,6 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const fs = require('fs');
 let Client;
 try {
   Client = require('pg').Client;
@@ -30,7 +32,8 @@ async function applyMigration() {
     await client.connect();
     console.log("Connected to Supabase PostgreSQL.");
 
-    const sql = fs.readFileSync('/app/applet/supabase/migrations/20261027000001_initial_schema.sql', 'utf8');
+    const migrationPath = path.join(__dirname, 'migrations', '20261027000001_initial_schema.sql');
+    const sql = fs.readFileSync(migrationPath, 'utf8');
 
     console.log("Applying migration 20261027000001_initial_schema.sql...");
     await client.query(sql);
@@ -65,7 +68,9 @@ async function applyMigration() {
 
     await client.end();
   } catch (err) {
-    console.error("Migration failed:", err);
+    const sanitizedMsg = (err && err.message ? err.message : String(err))
+      .replace(/:\/\/[^:]+:[^@]+@/, '://[REDACTED_USER]:[REDACTED_PASSWORD]@');
+    console.error("Migration failed:", sanitizedMsg);
     process.exit(1);
   }
 }
